@@ -13,6 +13,8 @@
 #include <VclTee.TeeGDIPlus.hpp>
 #include <VCLTee.TeEngine.hpp>
 #include <VCLTee.TeeProcs.hpp>
+#include <Vcl.Dialogs.hpp>
+#include <Vcl.ExtDlgs.hpp>
 //---------------------------------------------------------------------------
 class TForm1 : public TForm
 {
@@ -35,7 +37,17 @@ __published:	// IDE-managed Components
 	TCheckBox *HandCheckBox;
 	TButton *YesButton;
 	TLabel *FDataLabel;
-	TButton *Button1;
+	TButton *NoButton;
+	TChart *SpeedChart;
+	TChart *ChargeChart;
+	TButton *HandSpectraButton;
+	TButton *AutoSpectraButton;
+	TLabel *SpeedFLabel;
+	TLabel *ChargeFLabel;
+	TButton *SpeedSaveButton;
+	TButton *ChargeSaveButton;
+	TOpenTextFileDialog *AutoTextFileDialog;
+	TOpenTextFileDialog *HandTextFileDialog;
 	void __fastcall Exit_ButtonClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations

@@ -45,6 +45,14 @@ object Form1: TForm1
           ItemHeight = 19
           TabOrder = 0
         end
+        object AutoSpectraButton: TButton
+          Left = 583
+          Top = 528
+          Width = 506
+          Height = 49
+          Caption = 'Get spectra'
+          TabOrder = 1
+        end
       end
     end
     object HandTab: TTabSheet
@@ -98,7 +106,7 @@ object Form1: TForm1
         object HandFNameButton: TButton
           Left = 351
           Top = 528
-          Width = 186
+          Width = 162
           Height = 49
           Caption = 'File selection'
           TabOrder = 2
@@ -119,13 +127,21 @@ object Form1: TForm1
           Caption = 'Record speed and charge'
           TabOrder = 4
         end
-        object Button1: TButton
+        object NoButton: TButton
           Left = 726
           Top = 503
           Width = 180
           Height = 75
           Caption = 'Ignore chart'
           TabOrder = 5
+        end
+        object HandSpectraButton: TButton
+          Left = 535
+          Top = 528
+          Width = 170
+          Height = 49
+          Caption = 'Get spectra'
+          TabOrder = 6
         end
       end
     end
@@ -140,6 +156,46 @@ object Form1: TForm1
         Color = clCream
         ParentBackground = False
         TabOrder = 0
+        object SpeedFLabel: TLabel
+          Left = 8
+          Top = 559
+          Width = 809
+          Height = 19
+          Caption = 'Speed spectra file:'
+        end
+        object SpeedChart: TChart
+          Left = 8
+          Top = 7
+          Width = 809
+          Height = 546
+          Title.Font.Height = -16
+          Title.Font.Name = 'Terminal'
+          Title.Text.Strings = (
+            'Speed distribution')
+          BottomAxis.Title.Caption = 'Speed, m/s'
+          BottomAxis.Title.Font.Color = clBlue
+          BottomAxis.Title.Font.Height = -13
+          BottomAxis.Title.Font.Name = 'Terminal'
+          LeftAxis.LabelsFormat.Font.Color = clBlue
+          LeftAxis.LabelsFormat.Font.Height = -13
+          LeftAxis.LabelsFormat.Font.Name = 'Terminal'
+          LeftAxis.Title.Caption = 'Number of particles'
+          LeftAxis.Title.Font.Color = clBlue
+          LeftAxis.Title.Font.Height = -13
+          LeftAxis.Title.Font.Name = 'Terminal'
+          View3D = False
+          TabOrder = 0
+          DefaultCanvas = 'TGDIPlusCanvas'
+          ColorPaletteIndex = 13
+        end
+        object SpeedSaveButton: TButton
+          Left = 823
+          Top = 504
+          Width = 266
+          Height = 49
+          Caption = 'Save speed spectra'
+          TabOrder = 1
+        end
       end
     end
     object ChargeTab: TTabSheet
@@ -153,6 +209,46 @@ object Form1: TForm1
         Color = clCream
         ParentBackground = False
         TabOrder = 0
+        object ChargeFLabel: TLabel
+          Left = 8
+          Top = 559
+          Width = 809
+          Height = 19
+          Caption = 'Charge spectra file:'
+        end
+        object ChargeChart: TChart
+          Left = 8
+          Top = 7
+          Width = 809
+          Height = 546
+          Title.Font.Height = -16
+          Title.Font.Name = 'Terminal'
+          Title.Text.Strings = (
+            'Charge distribution')
+          BottomAxis.Title.Caption = 'Charge, Q'
+          BottomAxis.Title.Font.Color = clBlue
+          BottomAxis.Title.Font.Height = -13
+          BottomAxis.Title.Font.Name = 'Terminal'
+          LeftAxis.LabelsFormat.Font.Color = clBlue
+          LeftAxis.LabelsFormat.Font.Height = -13
+          LeftAxis.LabelsFormat.Font.Name = 'Terminal'
+          LeftAxis.Title.Caption = 'Number of particles'
+          LeftAxis.Title.Font.Color = clBlue
+          LeftAxis.Title.Font.Height = -13
+          LeftAxis.Title.Font.Name = 'Terminal'
+          View3D = False
+          TabOrder = 0
+          DefaultCanvas = 'TGDIPlusCanvas'
+          ColorPaletteIndex = 13
+        end
+        object ChargeSaveButton: TButton
+          Left = 823
+          Top = 504
+          Width = 266
+          Height = 49
+          Caption = 'Save charge spectra'
+          TabOrder = 1
+        end
       end
     end
   end
@@ -164,5 +260,13 @@ object Form1: TForm1
     Caption = 'EXIT'
     TabOrder = 1
     OnClick = Exit_ButtonClick
+  end
+  object AutoTextFileDialog: TOpenTextFileDialog
+    Left = 984
+    Top = 2
+  end
+  object HandTextFileDialog: TOpenTextFileDialog
+    Left = 873
+    Top = 2
   end
 end
