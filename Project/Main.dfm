@@ -13,7 +13,7 @@ object Form1: TForm1
   OldCreateOrder = False
   PixelsPerInch = 96
   TextHeight = 19
-  object FName_Label: TLabel
+  object FNameLabel: TLabel
     Left = 8
     Top = 624
     Width = 133
@@ -51,7 +51,16 @@ object Form1: TForm1
           Width = 506
           Height = 49
           Caption = 'Get spectra'
+          Enabled = False
           TabOrder = 1
+        end
+        object AutoFNameButton: TButton
+          Left = 583
+          Top = 473
+          Width = 506
+          Height = 49
+          Caption = 'First file selection'
+          TabOrder = 2
         end
       end
     end
@@ -78,8 +87,10 @@ object Form1: TForm1
           Top = 16
           Width = 339
           Height = 561
+          TabStop = False
           ItemHeight = 19
           TabOrder = 0
+          TabWidth = 15
         end
         object HandChart: TChart
           Left = 351
@@ -110,6 +121,7 @@ object Form1: TForm1
           Height = 49
           Caption = 'File selection'
           TabOrder = 2
+          OnClick = HandFNameButtonClick
         end
         object HandCheckBox: TCheckBox
           Left = 351
@@ -125,6 +137,7 @@ object Form1: TForm1
           Width = 180
           Height = 75
           Caption = 'Record speed and charge'
+          Enabled = False
           TabOrder = 4
         end
         object NoButton: TButton
@@ -133,6 +146,7 @@ object Form1: TForm1
           Width = 180
           Height = 75
           Caption = 'Ignore chart'
+          Enabled = False
           TabOrder = 5
         end
         object HandSpectraButton: TButton
@@ -141,6 +155,7 @@ object Form1: TForm1
           Width = 170
           Height = 49
           Caption = 'Get spectra'
+          Enabled = False
           TabOrder = 6
         end
       end
@@ -159,7 +174,7 @@ object Form1: TForm1
         object SpeedFLabel: TLabel
           Left = 8
           Top = 559
-          Width = 809
+          Width = 111
           Height = 19
           Caption = 'Speed spectra file:'
         end
@@ -212,7 +227,7 @@ object Form1: TForm1
         object ChargeFLabel: TLabel
           Left = 8
           Top = 559
-          Width = 809
+          Width = 116
           Height = 19
           Caption = 'Charge spectra file:'
         end
