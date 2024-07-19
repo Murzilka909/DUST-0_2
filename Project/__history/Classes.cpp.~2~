@@ -1,0 +1,124 @@
+//---------------------------------------------------------------------------
+
+#pragma hdrstop
+
+#include <iostream>
+#include <cstdio>
+#include <string>
+#include <sstream>
+#include <cmath>
+#include <math.h>
+
+#include "Classes.h"
+
+//---------------------------------------------------------------------------
+			   //точка данных - время + значения напряжения на каналах
+			   //+ коэффициентсвязи по амплитуде
+
+	DataPoint::DataPoint (int N)
+	{
+		dataStr=new double [N];
+		ch=N;
+	} // число столбцов в конструкторе
+	void DataPoint::setA(double a)			{dataStr[1]=a;} // установка значений
+	void DataPoint::setB(double b)			{dataStr[2]=b;}
+	void DataPoint::setT(double t)			{dataStr[0]=t;}
+	void DataPoint::setP(double *P)
+	{
+		int count=0;
+		while (count<ch)
+		{
+			dataStr[count]=P[count];
+			count++;
+		}
+	}
+
+	double DataPoint::getA()			{return dataStr[1];} // получение значений
+	double DataPoint::getB()			{return dataStr[2];}
+	double DataPoint::getT()			{return dataStr[0];}
+
+	double* DataPoint::getP()			{return dataStr;}
+
+//---------------------------------------------------------------------------
+				//точка спектра - амплитуда и скорость импульса
+				//по каждому из каналов и вместе
+	SpectrPoint::SpectrPoint (int N)
+	{
+		ch=N;
+		Q = new double [N-1];
+		V = new double [N];
+		Max = new double [N-1];
+		TMax = new double [N-1];
+		Min = new double [N-1];
+		TMin = new double [N-1];
+
+		count=0;
+		while (count<(ch-1))
+		{
+			Max[count]=-1;
+			TMax[count]=0;
+			Min[count]=1;
+			TMin[count]=0;
+			count++;
+		}
+	}
+	void SpectrPoint::to_zero() //экстремумы в ноль
+	{
+   		count=0;
+		while (count<(ch-1))
+		{
+			Max[count]=-1;
+			TMax[count]=0;
+			Min[count]=1;
+			TMin[count]=0;
+			count++;
+		}
+    }
+	void SpectrPoint::setQ(double* q)		{Q=q;} // установка значений
+	void SpectrPoint::setV(double* v)		{V=v;}
+
+
+	double* SpectrPoint::getQ()		{return Q;} // получение значений
+	double* SpectrPoint::getV()		{return V;}
+
+	void SpectrPoint::extrSpectr( DataPoint Point)//сравниваем, ищем экстремумы
+	{
+		double* dataPoint=new double[ch];
+		count =0;
+		while (count<(ch-1))
+		{
+			dataPoint = Point.getP();
+			if ((dataPoint[count+1])<Min[count])
+			{
+				Min[count]=(dataPoint[count+1]);
+				TMin[count]=dataPoint[0];
+			}
+			if ((dataPoint[count+1])>Max[count])
+			{
+				Max[count]=(dataPoint[count+1]);
+				TMax[count]=dataPoint[0];
+			}
+			count++;
+		}
+		delete dataPoint;
+	}
+
+	void SpectrPoint::calcSpectr() // расчет скоростей и ампитуд
+	{
+		count =0;
+		while (count<(ch-1))
+		{
+			Q[count]=fabs(Max[count]-Min[count])/2;
+			V[count]=0.07/((fabs(TMin[count]-TMax[count])+0.0000001)/1000);
+			count++;
+		}
+		if(ch==2)
+		{V[count]=1/((fabs(TMin[1]-TMin[0])+0.0000001)/1000);}
+		else
+		{V[count]=V[0];}
+	}
+
+
+
+//---------------------------------------------------------------------------
+#pragma package(smart_init)

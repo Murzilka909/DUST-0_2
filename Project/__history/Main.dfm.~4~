@@ -13,7 +13,7 @@ object Form1: TForm1
   OldCreateOrder = False
   PixelsPerInch = 96
   TextHeight = 19
-  object FNameLabel: TLabel
+  object FName_Label: TLabel
     Left = 8
     Top = 624
     Width = 133
@@ -87,16 +87,8 @@ object Form1: TForm1
           Top = 16
           Width = 339
           Height = 561
-          TabStop = False
-          Font.Charset = RUSSIAN_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Times New Roman'
-          Font.Style = []
-          ItemHeight = 15
-          ParentFont = False
+          ItemHeight = 19
           TabOrder = 0
-          TabWidth = 15
         end
         object HandChart: TChart
           Left = 351
@@ -127,7 +119,6 @@ object Form1: TForm1
           Height = 49
           Caption = 'File selection'
           TabOrder = 2
-          OnClick = HandFNameButtonClick
         end
         object HandCheckBox: TCheckBox
           Left = 351
@@ -145,7 +136,6 @@ object Form1: TForm1
           Caption = 'Record speed and charge'
           Enabled = False
           TabOrder = 4
-          OnClick = YesButtonClick
         end
         object NoButton: TButton
           Left = 726

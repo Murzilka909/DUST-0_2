@@ -26,16 +26,13 @@ int strNum, colNum; //кол-во строк и столбцов в файле данных
 int fileSize;      //размер файла в байтах
 
 double limV=2000;//предел напряжения
-bool mvFlag=0;
 
 int i,j,k;//счётчики
 char c;//буфер
 char cBuf[8];//буфер
 std::string s;//буфер
 
-DataPoint* DataP; //буфер точки осцилограммы
-SpectrPoint* SpectrP;//буфер точки спектра
-
+DataPoint* DataP;
 
 //---------------------преобразования типов всякие---------------------------
 std::string UnicodeToString (UnicodeString us)
@@ -55,7 +52,7 @@ std::string DoubleToString(double a)
 {
 	std::stringstream ss;
 	ss.setf(std::ios::scientific, std::ios::floatfield);
-	ss << std::setprecision(8) << a;
+	ss << std::setprecision(5) << a;
 	std::string s = ss.str();
 	return s;
 }
@@ -95,6 +92,7 @@ std::string CounterToFnum (int a, int n)
 //--------------------получение размера файла,выделение памяти---------------
 void GetFileSize()
 {
+	delete DataP;
 	fseek( file_Data , 0 , SEEK_END );//в конец файла маркер
 	fileSize = ftell(file_Data);//размер файла в байтах
 	fseek( file_Data , 0 , SEEK_SET );//обратно
@@ -112,6 +110,7 @@ void GetFileSize()
 	}
 	strNum=strNum-3;
 	colNum=((colNum-2)/strNum)+1;       //подбивка размеров
+	DataP=new DataPoint(colNum);
 }
 
 //--------------------подготовка к чтению -----------------------------------
@@ -119,28 +118,18 @@ void PrepareForRead()
 {
 	fseek( file_Data , 0 , SEEK_SET );//маркер в начало
 	int count=0;
-	int count_1=0;
-	mvFlag=1;
 	while (count<3)  //первые строки пропустил
 	{
 		fread(&c,1,1,file_Data);
 		if (count==1)
 		{
-			count_1=0;
-			while (count_1<7)
-			{
-				cBuf[count_1]=cBuf[count_1+1];
-                count_1++;
-			}                              //проверка наличия В во второй строке
-			cBuf[7]=c;                     //если есть то флаг в 0
-			s=cBuf;
-			if (s=="СЃ)\t(Р’)"){mvFlag=0;}
+
 		}
 		if (c=='\n') {count++;}
 	}
 }
 
-//--------------------чтение строки из файла в память-------------------------
+//--------------------чтение числа из файла в память-------------------------
 void ReadStrFile(double* DAT)
 {
 	int count=0;
@@ -169,8 +158,6 @@ void ReadStrFile(double* DAT)
 			DAT[count]=atof(s.c_str());
 			while ((c!='\t')&(c!='\n')) {fread(&c,1,1,file_Data);}
 		}
-		if ((mvFlag==0)&(count!=0))
-		{DAT[count]=DAT[count]*1000;}  //подгонка размерности под мВ
 		count++;
 	}
 
@@ -217,19 +204,18 @@ void __fastcall TForm1::HandFNameButtonClick(TObject *Sender)
 		if (file_Data != NULL)  //файл открылся
 		{
 			GetFileSize();  //cчитали размеры
-			HandChart->Series[0]->Clear();
-			HandChart->Series[1]->Clear();
-			PrepareForRead();//подготовка к чтению
-			DataP=new DataPoint(colNum);
-			SpectrP=new SpectrPoint(colNum);
-
+			j=0;
+			while(j<colNum-1)
+			{
+				HandChart->Series[j]->Clear();
+				j++;
+			}
+			PrepareForRead();
 			double* BUF= new double[colNum];
 			i=0;
 			while(i<strNum)
 			{
-				ReadStrFile(BUF);//чтение строки
-				DataP[0].setP(BUF);//значения в класс
-				SpectrP[0].extrSpectr(DataP[0]);//снятие спектров
+				ReadStrFile(BUF);
 				j=0;
 				while(j<colNum-1)
 				{
@@ -240,9 +226,6 @@ void __fastcall TForm1::HandFNameButtonClick(TObject *Sender)
 			}
 			fclose (file_Data);
 			delete BUF;
-
-			YesButton->Enabled=1;
-			NoButton->Enabled=1;
 		}
 		else    //файл не открылся
 		{
@@ -257,13 +240,5 @@ void __fastcall TForm1::HandFNameButtonClick(TObject *Sender)
 	}
 }
 
-//---------------------------------------------------------------------------
-
-void __fastcall TForm1::YesButtonClick(TObject *Sender)
-{
-	SpectrP[0].calcSpectr();
-	s=SpectrP[0].getStr();
-	HandListBox->Items->Add(s.c_str());
-}
 //---------------------------------------------------------------------------
 

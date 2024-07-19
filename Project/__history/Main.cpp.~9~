@@ -1,0 +1,187 @@
+//---------------------------------------------------------------------------
+#include <vcl.h>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <cstdio>
+#include <stdlib.h>
+#include <iomanip>
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "Main.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TForm1 *Form1;
+//----------------------глобальные переменные--------------------------------
+FILE* file_Data;          //осциллограмма - чтение
+FILE* file_Res;           //спектр - запись
+
+std::string fName; //имя и путь к файлу
+
+int strNum, colNum; //кол-во строк и столбцов в файле данных
+int fileSize;      //размер файла в байтах
+
+double** dataArr;  //массив для файла данных
+
+int i,j,k;//счётчики
+char c;//буфер
+char* cBuf[8];//буфер
+std::string s;//буфер
+
+//---------------------преобразования типов всякие---------------------------
+std::string UnicodeToString (UnicodeString us)
+{
+	AnsiString as=us;
+	std::string s = as.c_str();
+	return s;
+}
+std::string IntToString (int a)
+{
+	std::stringstream ss;
+	ss << a;
+	std::string s = ss.str();
+	return s;
+}
+std::string DoubleToString(double a)
+{
+	std::stringstream ss;
+	ss.setf(std::ios::scientific, std::ios::floatfield);
+	ss << std::setprecision(5) << a;
+	std::string s = ss.str();
+	return s;
+}
+double StringToDouble (std::string str)
+{
+	//std::string str = a;
+	std::istringstream iss(str);
+	double result;
+	iss >> result;
+	return result;
+}
+//--------------------получение размера файла,выделение памяти---------------
+void GetFileSize()
+{
+	fseek( file_Data , 0 , SEEK_END );//в конец файла маркер
+	fileSize = ftell(file_Data);//размер файла в байтах
+	fseek( file_Data , 0 , SEEK_SET );//обратно
+	i=0;
+	strNum=0;
+	colNum=0;
+	while (ftell(file_Data)<fileSize)//подсчёт размеров файла
+	{
+		fread(&c,1,1,file_Data);
+		if (c=='\n')
+		{strNum++;}
+		if (c=='\t')
+		{colNum++;}
+		i++;
+	}
+	strNum=strNum-3;
+	colNum=((colNum-2)/strNum)+1;       //подбивка размеров
+
+	dataArr = new double*[colNum];//выделение памяти
+	i=0;
+	while (i<colNum)
+	{
+		dataArr[i] = new double[strNum];
+		i++;
+	}
+}
+
+//--------------------чтение файла в память----------------------------------
+void ReadFile()
+{
+	fseek( file_Data , 0 , SEEK_SET );//маркер в начало
+	i=0;
+	while (i<3)  //первые строки пропустил
+	{
+		fread(&c,1,1,file_Data);
+		if (c=='\n') {i++;}
+	}
+	i=0;
+	while (i<colNum)//дальше пошёл читать
+	{
+		j=0;
+		while(j<strNum)
+		{
+			fread(cBuf,8,1,file_Data);
+			dataArr[i][j]=StringToDouble(cBuf.c_str());
+			while (c!='\t') {fread(&c,1,1,file_Data);}
+			j++;
+		}
+		while (c!='\n') {fread(&c,1,1,file_Data);}
+		i++;
+    }
+}
+
+//--------------------обработка данных----------------------------------
+void Calc()
+{
+
+}
+
+//----------------------открытие окна----------------------------------------
+__fastcall TForm1::TForm1(TComponent* Owner)
+	: TForm(Owner)
+{
+}
+
+//---------------------закрытие окна-----------------------------------------
+void __fastcall TForm1::Exit_ButtonClick(TObject *Sender)
+{
+	delete dataArr;
+	fclose (file_Data);
+	Close();
+}
+
+//---------------------чтение файла в ручном режиме--------------------------
+void __fastcall TForm1::HandFNameButtonClick(TObject *Sender)
+{
+	fclose (file_Data);
+	if ( HandTextFileDialog->Execute() )
+	//диалог сработал
+	{
+		FNameLabel->Caption=HandTextFileDialog->FileName;
+		fName=UnicodeToString(FNameLabel->Caption);
+		file_Data = fopen(fName.c_str(), "r");
+		if (file_Data != NULL)  //файл открылся
+		{
+			GetFileSize();
+			ReadFile();
+			i=0;
+			while (i<(colNum-1))
+			{
+				TLineSeries *serie = new TLineSeries(HandChart);
+				HandChart->AddSeries(serie);
+				serie->Title = IntToString(i+1).c_str();
+				serie->LinePen->Width = 2;
+				j=0;
+				while(j<strNum)
+				{
+					serie->AddXY(dataArr[0][j],dataArr[i+1][j]);
+					j++;
+					s=DoubleToString(dataArr[0][j])+"\t"+DoubleToString(dataArr[i+1][j]);
+					HandListBox->Items->Add(s.c_str());
+				}
+				i++;
+			}
+			fclose (file_Data);
+		}
+		else    //файл не открылся
+		{
+			ShowMessage("File is not opened");
+			FNameLabel->Caption="The file is not selected";
+		}
+	}
+	else //диалог не сработал
+	{
+		ShowMessage("File is not selected");
+		FNameLabel->Caption="The file is not selected";
+	}
+}
+
+//---------------------------------------------------------------------------
+
