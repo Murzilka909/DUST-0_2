@@ -76,8 +76,8 @@ object Form1: TForm1
         ParentBackground = False
         TabOrder = 0
         object FDataLabel: TLabel
-          Left = 560
-          Top = 463
+          Left = 535
+          Top = 447
           Width = 52
           Height = 19
           Caption = 'File data'
@@ -98,35 +98,13 @@ object Form1: TForm1
           TabOrder = 0
           TabWidth = 15
         end
-        object HandChart: TChart
-          Left = 351
-          Top = 16
-          Width = 746
-          Height = 441
-          Title.Font.Height = -16
-          Title.Font.Name = 'Terminal'
-          Title.Text.Strings = (
-            'Oscilloscope data')
-          BottomAxis.Title.Caption = 'ms'
-          BottomAxis.Title.Font.Color = clBlue
-          BottomAxis.Title.Font.Height = -13
-          BottomAxis.Title.Font.Name = 'Terminal'
-          LeftAxis.Title.Caption = 'mV'
-          LeftAxis.Title.Font.Color = clBlue
-          LeftAxis.Title.Font.Height = -13
-          LeftAxis.Title.Font.Name = 'Terminal'
-          View3D = False
-          TabOrder = 1
-          DefaultCanvas = 'TGDIPlusCanvas'
-          ColorPaletteIndex = 13
-        end
         object HandFNameButton: TButton
           Left = 351
           Top = 528
           Width = 162
           Height = 49
           Caption = 'File selection'
-          TabOrder = 2
+          TabOrder = 1
           OnClick = HandFNameButtonClick
         end
         object HandCheckBox: TCheckBox
@@ -135,7 +113,7 @@ object Form1: TForm1
           Width = 186
           Height = 17
           Caption = 'Files one at a time'
-          TabOrder = 3
+          TabOrder = 2
         end
         object YesButton: TButton
           Left = 912
@@ -144,7 +122,7 @@ object Form1: TForm1
           Height = 75
           Caption = 'Record speed and charge'
           Enabled = False
-          TabOrder = 4
+          TabOrder = 3
           OnClick = YesButtonClick
         end
         object NoButton: TButton
@@ -154,7 +132,8 @@ object Form1: TForm1
           Height = 75
           Caption = 'Ignore chart'
           Enabled = False
-          TabOrder = 5
+          TabOrder = 4
+          OnClick = NoButtonClick
         end
         object HandSpectraButton: TButton
           Left = 535
@@ -163,7 +142,50 @@ object Form1: TForm1
           Height = 49
           Caption = 'Get spectra'
           Enabled = False
+          TabOrder = 5
+        end
+        object HandChart: TChart
+          Left = 351
+          Top = 16
+          Width = 741
+          Height = 425
+          Title.Font.Height = -16
+          Title.Font.Name = 'Terminal'
+          Title.Text.Strings = (
+            'Oscilloscope data')
+          BottomAxis.Title.Caption = 'ms'
+          BottomAxis.Title.Font.Color = clBlue
+          BottomAxis.Title.Font.Height = -13
+          BottomAxis.Title.Font.Name = 'Terminal'
+          BottomAxis.Title.Color = clBlue
+          LeftAxis.Title.Caption = 'mV'
+          LeftAxis.Title.Font.Color = clBlue
+          LeftAxis.Title.Font.Height = -13
+          LeftAxis.Title.Font.Name = 'Terminal'
+          View3D = False
           TabOrder = 6
+          DefaultCanvas = 'TGDIPlusCanvas'
+          ColorPaletteIndex = 13
+          object Series1: TLineSeries
+            Title = 'A'
+            Brush.BackColor = clDefault
+            Pointer.InflateMargins = True
+            Pointer.Style = psRectangle
+            XValues.Name = 'X'
+            XValues.Order = loAscending
+            YValues.Name = 'Y'
+            YValues.Order = loNone
+          end
+          object Series2: TLineSeries
+            Title = 'B'
+            Brush.BackColor = clDefault
+            Pointer.InflateMargins = True
+            Pointer.Style = psRectangle
+            XValues.Name = 'X'
+            XValues.Order = loAscending
+            YValues.Name = 'Y'
+            YValues.Order = loNone
+          end
         end
       end
     end
@@ -271,6 +293,19 @@ object Form1: TForm1
           Caption = 'Save charge spectra'
           TabOrder = 1
         end
+      end
+    end
+    object SettingsTab: TTabSheet
+      Caption = 'Settings'
+      ImageIndex = 4
+      object Panel5: TPanel
+        Left = 0
+        Top = 0
+        Width = 1101
+        Height = 587
+        Color = clCream
+        ParentBackground = False
+        TabOrder = 0
       end
     end
   end

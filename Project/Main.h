@@ -41,7 +41,6 @@ __published:	// IDE-managed Components
 	TLabel *FNameLabel;
 	TListBox *AutoListBox;
 	TListBox *HandListBox;
-	TChart *HandChart;
 	TButton *HandFNameButton;
 	TCheckBox *HandCheckBox;
 	TButton *YesButton;
@@ -58,9 +57,15 @@ __published:	// IDE-managed Components
 	TOpenTextFileDialog *AutoTextFileDialog;
 	TOpenTextFileDialog *HandTextFileDialog;
 	TButton *AutoFNameButton;
+	TChart *HandChart;
+	TLineSeries *Series1;
+	TLineSeries *Series2;
+	TTabSheet *SettingsTab;
+	TPanel *Panel5;
 	void __fastcall Exit_ButtonClick(TObject *Sender);
 	void __fastcall HandFNameButtonClick(TObject *Sender);
 	void __fastcall YesButtonClick(TObject *Sender);
+	void __fastcall NoButtonClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TForm1(TComponent* Owner);

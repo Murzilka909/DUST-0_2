@@ -27,9 +27,12 @@ std::string DoubleToString(double a)
 
 	DataPoint::DataPoint (int N)
 	{
-		dataStr=new double [N];
 		ch=N;
 	} // число столбцов в конструкторе
+
+	DataPoint::~DataPoint ()
+	{
+	}
 	void DataPoint::setA(double a)			{dataStr[1]=a;} // установка значений
 	void DataPoint::setB(double b)			{dataStr[2]=b;}
 	void DataPoint::setT(double t)			{dataStr[0]=t;}
@@ -47,7 +50,15 @@ std::string DoubleToString(double a)
 	double DataPoint::getB()			{return dataStr[2];}
 	double DataPoint::getT()			{return dataStr[0];}
 
-	double* DataPoint::getP()			{return dataStr;}
+	void DataPoint::getP(double* P)
+	{
+		int count=0;
+		while (count<ch)
+		{
+			P[count]=dataStr[count];
+			count++;
+		}
+	}
 
 //---------------------------------------------------------------------------
 				//точка спектра - амплитуда и скорость импульса
@@ -55,14 +66,7 @@ std::string DoubleToString(double a)
 	SpectrPoint::SpectrPoint (int N)
 	{
 		ch=N;
-		Q = new double [N-1];
-		V = new double [N];
-		Max = new double [N-1];
-		TMax = new double [N-1];
-		Min = new double [N-1];
-		TMin = new double [N-1];
-
-		count=0;
+		int count=0;
 		while (count<(ch-1))
 		{
 			Max[count]=-1;
@@ -72,9 +76,12 @@ std::string DoubleToString(double a)
 			count++;
 		}
 	}
+	SpectrPoint::~SpectrPoint ()
+	{
+    }
 	void SpectrPoint::to_zero() //экстремумы в ноль
 	{
-   		count=0;
+		int count=0;
 		while (count<(ch-1))
 		{
 			Max[count]=-1;
@@ -84,33 +91,65 @@ std::string DoubleToString(double a)
 			count++;
 		}
     }
-	void SpectrPoint::setQ(double* q)		{Q=q;} // установка значений
-	void SpectrPoint::setV(double* v)		{V=v;}
+	void SpectrPoint::setQ(double* q)
+	{
+		int count=0;
+		while (count<(ch-1))
+		{
+			Q[count]=q[count];
+			count++;
+		}
+	} // установка значений
+	void SpectrPoint::setV(double* v)
+	{
+		int count=0;
+		while (count<(ch-1))
+		{
+			V[count]=v[count];
+			count++;
+		}
+	} // установка значений
 
-
-	double* SpectrPoint::getQ()		{return Q;} // получение значений
-	double* SpectrPoint::getV()		{return V;}
+	void SpectrPoint::getQ(double *q)
+	{
+		int count=0;
+		while (count<(ch-1))
+		{
+			q[count]=Q[count];
+			count++;
+		}
+	}
+	 // получение значений
+	void SpectrPoint::getV(double *v)
+	{
+		int count=0;
+		while (count<(ch-1))
+		{
+			v[count]=V[count];
+			count++;
+		}
+	}
 
 	void SpectrPoint::extrSpectr( DataPoint Point)//сравниваем, ищем экстремумы
 	{
-		double* dataPoint=new double[ch];
-		count =0;
+		double* P=new double[ch];
+		int count =0;
 		while (count<(ch-1))
 		{
-			dataPoint = Point.getP();
-			if ((dataPoint[count+1])<Min[count])
+			Point.getP(P);
+			if ((P[count+1])<Min[count])
 			{
-				Min[count]=(dataPoint[count+1]);
-				TMin[count]=dataPoint[0];
+				Min[count]=(P[count+1]);
+				TMin[count]=P[0];
 			}
-			if ((dataPoint[count+1])>Max[count])
+			if ((P[count+1])>Max[count])
 			{
-				Max[count]=(dataPoint[count+1]);
-				TMax[count]=dataPoint[0];
+				Max[count]=(P[count+1]);
+				TMax[count]=P[0];
 			}
 			count++;
 		}
-		delete dataPoint;
+		delete[] P;
 	}
 
 	void SpectrPoint::calcSpectr() // расчет скоростей и ампитуд

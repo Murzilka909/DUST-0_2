@@ -12,11 +12,11 @@
 class DataPoint
 {
   private:
-	double * dataStr;
+	double dataStr[3];
 	int ch;
   public:
 	DataPoint (int);//при создании объекта класса задается размерность
-	//2 или 3 столбца
+	~DataPoint ();
 	void setA(double ); // установка значений
 	void setB(double );
 	void setT(double );
@@ -24,7 +24,7 @@ class DataPoint
 	double getA();// получение значений
 	double getB();
 	double getT();
-	double* getP();
+	void getP(double*);
   protected:
 
 };
@@ -34,24 +34,25 @@ class DataPoint
 class SpectrPoint
 {
   private:
-	double*	Q;   //Искомые параметры
-	double*	V;
-	double* Max;   //получаем из спектра
-	double* TMax;
-	double* Min;
-	double* TMin;
+	double Q[2];   //Искомые параметры
+	double V[3];
+	double Max[2];   //получаем из спектра
+	double TMax[2];
+	double Min[2];
+	double TMin[2];
 
-	int ch, count;
+	int ch;
 
   public:
 	SpectrPoint (int);
+	~SpectrPoint ();
 	void to_zero(); //экстремумы в ноль
 
 	void setQ(double* )	; // установка значений
 	void setV(double* )	;
 
-	double* getQ(); // получение значений
-	double* getV();
+	void  getQ(double*); // получение значений
+	void getV(double*);
 	void extrSpectr( DataPoint);//сравниваем, ищем экстремумы
 	void calcSpectr(); // расчет скоростей и ампитуд
 
