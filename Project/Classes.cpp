@@ -21,6 +21,13 @@ std::string DoubleToString(double a)
 	std::string s = ss.str();
 	return s;
 }
+
+double DeltaCalc(double A, double B)
+{
+	double d=(A+B)/(double)2;
+	d=(A-d)/d;
+    return (fabs(d));
+}
 //---------------------------------------------------------------------------
 			   //точка данных - время + значения напряжения на каналах
 			   //+ коэффициентсвязи по амплитуде
@@ -75,6 +82,15 @@ std::string DoubleToString(double a)
 			TMin[count]=0;
 			count++;
 		}
+		count=0;
+		A=0;
+		I=0;
+		while (count<(3))//если два канала, то проверку будем делать
+		{
+			Integral[count]=0;
+			Amp[count]=0;
+			count++;
+		}
 	}
 	SpectrPoint::~SpectrPoint ()
 	{
@@ -99,7 +115,9 @@ std::string DoubleToString(double a)
 			Q[count]=q[count];
 			count++;
 		}
-	} // установка значений
+	}
+
+	// установка значений
 	void SpectrPoint::setV(double* v)
 	{
 		int count=0;
@@ -119,18 +137,105 @@ std::string DoubleToString(double a)
 			count++;
 		}
 	}
+
 	 // получение значений
 	void SpectrPoint::getV(double *v)
 	{
 		int count=0;
-		while (count<(ch-1))
+		while (count<(ch))
 		{
 			v[count]=V[count];
 			count++;
 		}
 	}
 
-	void SpectrPoint::extrSpectr( DataPoint Point)//сравниваем, ищем экстремумы
+	 //базовую линию в ноль
+	void SpectrPoint::zeroBase()
+	{
+		BASE=0;
+		int count=0;
+		A=0;
+		I=0;
+		while (count<3)
+		{
+			Integral[count]=0;
+			Amp[count]=0;
+			count++;
+		}
+	}
+
+	//установка базовой линии по точке данных
+	void SpectrPoint::setBase( DataPoint Point, int NUM)
+	{
+		double* P=new double[ch];
+		Point.getP(P);
+		BASE=BASE+P[1]/NUM;
+		delete[] P;
+	}
+
+	//получение интегралов и амплитуд
+	void SpectrPoint::extrAandI( DataPoint Point)
+	{
+		double* P=new double[ch];
+		int count =0;
+		if (I*(P[1]-BASE)<0) //если знак сменился
+		{
+			count =0;
+			while(count<3)
+			{
+				if((Integral[count])<(fabs(I))){Integral[count]=fabs(I);}
+				if(Amp[count]<fabs(A)){Amp[count]=fabs(A);}
+				count++;
+			}
+			I=P[1]-BASE;
+			A=P[1]-BASE;
+		}
+		else
+		{
+			I=I+P[1];
+			if (fabs(P[1])>fabs(A)) {A=fabs(P[1]);}
+        }
+		delete[] P;
+	}
+
+	//проверка отклонений
+	bool SpectrPoint::Check(double A12,
+				double A23,
+				double I12,
+				double I23,
+				double dS,
+				double dS_AB,
+				double dQ)
+	{
+		bool a=1;
+		bool b;
+		if (ch==3)
+		{
+			b=DeltaCalc(V[0]+V[1], 2*V[2])<dS;
+			a=a||b;
+			b=DeltaCalc(V[0], V[1])<dS_AB;
+			a=a||b;
+			b=DeltaCalc(Q[0], Q[1])<dQ;
+			a=a||b;
+			return a;
+		}
+		else
+		{
+			b=DeltaCalc(Amp[0], Amp[1])<A12;
+			a=a||b;
+			b=DeltaCalc(Amp[1], Amp[3])>A23;
+			a=a||b;
+			b=DeltaCalc(Integral[0], Integral[1])<I12;
+			a=a||b;
+			b=DeltaCalc(Integral[1], Integral[3])>I23;
+			a=a||b;
+			return a;
+        }
+    }
+
+
+	//сравниваем, ищем экстремумы
+	void SpectrPoint::extrSpectr( DataPoint Point)
 	{
 		double* P=new double[ch];
 		int count =0;
@@ -152,12 +257,13 @@ std::string DoubleToString(double a)
 		delete[] P;
 	}
 
-	void SpectrPoint::calcSpectr() // расчет скоростей и ампитуд
+	// расчет скоростей и ампитуд
+	void SpectrPoint::calcSpectr()
 	{
 		int count =0;
 		while (count<(ch-1))
 		{
-			Q[count]=fabs(Max[count]-Min[count])/2;
+			Q[count]=fabs(Max[count]-Min[count])/2.0;
 			V[count]=0.07/((fabs(TMin[count]-TMax[count])+0.0000001)/1000);
 			count++;
 		}
@@ -167,6 +273,7 @@ std::string DoubleToString(double a)
 		{V[count]=V[0];}
 	}
 
+	// работа со строками
 	std::string SpectrPoint::getStr()
 	{
 		std::string STR="";
@@ -192,14 +299,14 @@ std::string DoubleToString(double a)
 		while (count<ch)
 		{
 			V[count]=atof(STR.c_str());
-			STR.erase(0, 8);
+			STR.erase(0, 9);
 			count++;
 		}
 		count=0;
 		while (count<ch-1)
 		{
 			Q[count]=atof(STR.c_str());
-			STR.erase(0, 8);
+			STR.erase(0, 9);
 			count++;
 		}
 

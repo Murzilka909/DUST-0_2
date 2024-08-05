@@ -32,10 +32,22 @@ std::string fBaseName; //имя и путь к файлу
 
 int strNum, colNum; //кол-во строк и столбцов в файле данных
 int fileSize;      //размер файла в байтах
+int fNumMin, fNumMax;//диапазон номеров файлов
 
-double limV=5000;//предел напряжения
+double limV;//предел напряжения
+double gainA; //усиление по каналам
+double gainB;
+
+double stepDistrV;//области суммирования при построении спектров
+double stepDistrQ;
+
+double deltaV, deltaV_AB, deltaQ_AB;//расчёт для двух каналов
+
+double deltaI12, deltaI23; //предельные отклонения амплитуд и интегралов
+double deltaA12, deltaA23;
+int baseLenght;  //длина отрезка, по которому строится базовая линия
+
 bool mvFlag=0;//флаг размерности, если 1 - мВ
-
 
 int fileCount; //счётчик файлов
 int i,j,k,m;//счётчики
@@ -95,6 +107,39 @@ std::string NumToString(int n)
 	return s;
 }
 
+//---------------------целое число из Editа---------------------------
+int NumFromEdit (TEdit* EDIT, int MIN, int MAX)
+{
+	int a=atof(UnicodeToString(EDIT->Text).c_str());
+	if ((a<=MAX)&(a>=MIN))
+	{
+		return a;
+	}
+	else
+	{
+		ShowMessage ("Invalid INT value");
+		return NULL;
+	}
+}
+//---------------------дробное число из Editа---------------------------
+double PhDoubleFromEdit (TEdit* EDIT,   double MAX)
+{
+	double a=atof(UnicodeToString(EDIT->Text).c_str());
+
+	bool b;
+	if (MAX==0){b=1;}
+	else {b=(a<MAX);}
+
+	if (b&(a>0))
+	{
+		return a;
+	}
+	else
+	{
+		ShowMessage ("Invalid phisyc value");
+		return NULL;
+	}
+}
 //--------------------имя и путь к файлу по счётчику--------------------------
 void CounterToFnum (int n)
 {
@@ -102,10 +147,32 @@ void CounterToFnum (int n)
 	fName=fBaseName+" "+s+".txt";
 }
 
+//--------------------сортировка массива-------------------------------------
+void Sort(double* DAT, int Length)
+{
+    double BUF;
+    i=0;
+	while(i<Length-1)
+	{
+		j=0;
+		while(j<Length-i-1)
+		{
+			if(DAT[j] > DAT[j + 1])
+			{
+				BUF=DAT[j];
+                DAT[j]=DAT[j + 1];
+                DAT[j + 1]=BUF;
+			}
+            j++;
+		}
+        i++;
+	}
+}
+
 //--------------------получение базового названия файла----------------------
 void GetFBaseName()
 {
-	fBaseName=fName;//временное(?) решение - пока стартуем с начала
+	fBaseName=fName;// решение - пока стартуем с начала
 	std::string to_delete=").txt";  // какую подстроку удалить
 	size_t start =fBaseName.find(to_delete);            // находим позицию подстроки
 	if (start != std::string::npos) // если такая подстрока есть, перебираем числа
@@ -235,8 +302,12 @@ void ReadStrFile(double* DAT)
 //--------------------чтение данных---------------------------------------
 void HandReadFile()
 {
-		Form1->Series1->Clear();
-		Form1->Series2->Clear();
+		k=0;
+		while(k<colNum-1)
+		{
+			Form1->HandChart->Series[k]->Clear();
+			k++;
+		}
 
 		file_Data = fopen(fName.c_str(), "r");
 		if (file_Data != NULL)  //файл открылся
@@ -277,11 +348,156 @@ void HandReadFile()
 		}
 }
 
+//--------------------чтение данных---------------------------------------
+void AutoReadFile()
+{
+		file_Data = fopen(fName.c_str(), "r");
+		if (file_Data != NULL)  //файл открылся
+		{
+
+			if (CheckFileSize()){GetFileSize();} //если несоответствие - считали размер
+			PrepareForRead();//подготовка к чтению
+
+			SpectrP->zeroBase();
+			m=0;
+			while(m<baseLenght) //построение базовой линии
+			{
+				ReadStrFile(Buf);//чтение строки
+				DataP->setP(Buf);//значения в класс
+				SpectrP->setBase(*DataP, baseLenght);
+				m++;
+			}
+			while(m<strNum)
+			{
+				ReadStrFile(Buf);//чтение строки
+				DataP->setP(Buf);//значения в класс
+				SpectrP->extrSpectr(*DataP);//снятие спектров
+				SpectrP-> extrAandI(*DataP);//получение контр. параметров
+				m++;
+			}
+			fclose (file_Data);
+		}
+		else    //файл не открылся
+		{
+			ShowMessage("File is not opened");
+			Form1->FNameLabel->Caption="The file is not selected";
+		}
+}
+
+//----------------------построение спектров----------------------------------
+void GetSpectrChart(TListBox* LIST)
+{
+	i=0;
+    s = "V, m/s;";
+    Form1->SpeedListBox->Clear();
+    Form1->SpeedListBox->Items->Add(s.c_str());
+    double DAT[3];
+	int P_NUM = LIST->Count;//сколько всего строк записано
+	double* DATA_V=new double[P_NUM];
+	double* DATA_Q=new double[P_NUM];
+	i=0;
+	while (i<P_NUM) //все строки считываю
+	{
+		SpectrP->setStr(UnicodeToString(LIST->Items->operator [](i)));
+		SpectrP->getV(DAT);
+		DATA_V[i]=DAT[colNum-1];
+
+		SpectrP->getQ(DAT);
+		if (colNum==3){DATA_Q[i]=(gainA*DAT[0]+gainB*DAT[1])/2;}
+        else{DATA_Q[i]=gainA*DAT[0];}
+
+        i++;
+	}
+
+	Sort(DATA_V, P_NUM);      //сортируем массивы
+    Sort(DATA_Q, P_NUM);
+
+	j=1;                 //номера интервалов по скорости
+	k=1;                 //по заряду
+
+    int NUM_V=0;  //число частиц в интервале
+    int NUM_Q=0;
+
+	i=0;                 //номер строки в массиве
+
+	Form1->SpeedChart->Series[0]->Clear();
+	Form1->ChargeChart->Series[0]->Clear();
+
+	Form1->SpeedChart->Series[0]->AddXY(0,0);
+	Form1->ChargeChart->Series[0]->AddXY(0,0);
+	while (i<P_NUM)
+	{
+		if ((DATA_V[i]<j*stepDistrV)&(DATA_V[i]>(j-1)*stepDistrV))//если в интервале
+		{
+			NUM_V++; //плюс 1 к высоте столбца
+		}
+		else        //иначе
+		{
+			if(DATA_V[i]==j*stepDistrV){NUM_V++;}
+			Form1->SpeedChart->Series[0]->AddXY((j-1)*stepDistrV,NUM_V);
+			Form1->SpeedChart->Series[0]->AddXY((j)*stepDistrV,NUM_V);
+			while ((DATA_V[i]>(j)*stepDistrV))
+			{
+				j++;
+				Form1->SpeedChart->Series[0]->AddXY((j-1)*stepDistrV,0);
+			}
+			NUM_V=1;
+		}
+		if ((DATA_Q[i]<k*stepDistrQ)&(DATA_Q[i]>(k-1)*stepDistrQ))//если в интервале
+		{
+			NUM_Q++; //плюс 1 к высоте столбца
+		}
+		else        //иначе
+		{
+			if(DATA_Q[i]==k*stepDistrQ){NUM_Q++;}
+			Form1->ChargeChart->Series[0]->AddXY((k-1)*stepDistrQ,NUM_Q);
+			Form1->ChargeChart->Series[0]->AddXY((k)*stepDistrQ,NUM_Q);
+			while ((DATA_Q[i]>(k)*stepDistrQ))
+			{
+				k++;
+				Form1->ChargeChart->Series[0]->AddXY((k-1)*stepDistrQ,0);
+			}
+			NUM_Q=1;
+		}
+        i++;
+    }
+    Form1->SpeedChart->Series[0]->AddXY((j-1)*stepDistrV,NUM_V);
+    Form1->SpeedChart->Series[0]->AddXY((j)*stepDistrV,NUM_V);
+    Form1->SpeedChart->Series[0]->AddXY((j)*stepDistrV,0);
+	Form1->ChargeChart->Series[0]->AddXY((k-1)*stepDistrQ,NUM_Q);
+	Form1->ChargeChart->Series[0]->AddXY((k)*stepDistrQ,NUM_Q);
+	Form1->ChargeChart->Series[0]->AddXY((k)*stepDistrQ,0);
+
+    delete [] DATA_V;
+	delete [] DATA_Q;
+}
+
 //----------------------открытие окна----------------------------------------
 __fastcall TForm1::TForm1(TComponent* Owner)
 	: TForm(Owner)
 {
+	limV = PhDoubleFromEdit(LimVEdit,0);  //считывание значений параметров с экрана
+	gainA = PhDoubleFromEdit(GainAEdit,0);
+	gainB = PhDoubleFromEdit(GainBEdit,0);
+	stepDistrV = PhDoubleFromEdit(DistrStepVEdit,0);
+	stepDistrQ = PhDoubleFromEdit(DistrStepQEdit,0);
+	Form1->SpeedChart->BottomAxis->Maximum = PhDoubleFromEdit(MaxSpeedEdit,0);
+	Form1->ChargeChart->BottomAxis->Maximum = PhDoubleFromEdit(MaxChargeEdit,0);
 
+
+
+	deltaV=PhDoubleFromEdit(DeltaSpeedCommEdit,1);
+	deltaV_AB=PhDoubleFromEdit(DeltaSpeedABEdit,1);
+	deltaQ_AB=PhDoubleFromEdit(DeltaChargeABEdit,1);
+
+	deltaI12=PhDoubleFromEdit(DeltaI12Edit,1);
+	deltaI23=PhDoubleFromEdit(DeltaI23Edit,1);
+	deltaA12=PhDoubleFromEdit(DeltaA12Edit,1);
+	deltaA23=PhDoubleFromEdit(DeltaA23Edit,1);
+	baseLenght=NumFromEdit(BaseNumEdit,1,1000);
+
+	fNumMin=NumFromEdit(MinFNumEdit,1,10000);
+	fNumMax=NumFromEdit(MaxFNumEdit,fNumMin,10000);
 }
 
 //---------------------закрытие окна-----------------------------------------
@@ -323,36 +539,131 @@ void __fastcall TForm1::YesButtonClick(TObject *Sender)
 	s=SpectrP[0].getStr();
 	HandListBox->Items->Add(s.c_str());
 
-	if(HandCheckBox->Checked==0)
+	HandSpectraButton->Enabled=1; //можно считать спектр
+
+	if(HandCheckBox->Checked==0) //если отключен одиночный режим
 	{
 		fileCount++;  //новый файл
 		CounterToFnum(fileCount);
 		FNameLabel->Caption=fName.c_str();
 		HandReadFile();
 	}
-	else
+	else                                   //если включен
 	{
 		HandFNameButton->Enabled=1;
 	}
 }
-//---------------------------------------------------------------------------
 
+//-------------------графики отклонены в ручном режиме-----------------------
 void __fastcall TForm1::NoButtonClick(TObject *Sender)
 {
-    YesButton->Enabled=0;
+	YesButton->Enabled=0;
 	NoButton->Enabled=0;
 
-	if(HandCheckBox->Checked==0)
+	if(HandCheckBox->Checked==0)    //если отключен одиночный режим
 	{
 		fileCount++;  //новый файл
 		CounterToFnum(fileCount);
 		FNameLabel->Caption=fName.c_str();
 		HandReadFile();
 	}
-	else
+	else                            //если включен
 	{
 		HandFNameButton->Enabled=1;
 	}
+}
+
+//------------------Установка значение с вкладки сетингс---------------------
+void __fastcall TForm1::SetValButtonClick(TObject *Sender)
+{
+	limV = PhDoubleFromEdit(LimVEdit,0);  //считывание значений параметров с экрана
+	gainA = PhDoubleFromEdit(GainAEdit,0);
+	gainB = PhDoubleFromEdit(GainBEdit,0);
+	stepDistrV = PhDoubleFromEdit(DistrStepVEdit,0);
+	stepDistrQ = PhDoubleFromEdit(DistrStepQEdit,0);
+	Form1->SpeedChart->BottomAxis->Maximum = PhDoubleFromEdit(MaxSpeedEdit,0);
+	Form1->ChargeChart->BottomAxis->Maximum = PhDoubleFromEdit(MaxChargeEdit,0);
+
+
+
+	deltaV=PhDoubleFromEdit(DeltaSpeedCommEdit,1);
+	deltaV_AB=PhDoubleFromEdit(DeltaSpeedABEdit,1);
+	deltaQ_AB=PhDoubleFromEdit(DeltaChargeABEdit,1);
+
+	deltaI12=PhDoubleFromEdit(DeltaI12Edit,1);
+	deltaI23=PhDoubleFromEdit(DeltaI23Edit,1);
+	deltaA12=PhDoubleFromEdit(DeltaA12Edit,1);
+	deltaA23=PhDoubleFromEdit(DeltaA23Edit,1);
+	baseLenght=NumFromEdit(BaseNumEdit,1,1000);
+
+	fNumMin=NumFromEdit(MinFNumEdit,1,10000);
+	fNumMax=NumFromEdit(MaxFNumEdit,fNumMin,10000);
+}
+
+//------------------построение спектров по данным ручного режима-------------
+void __fastcall TForm1::HandSpectraButtonClick(TObject *Sender)
+{
+    GetSpectrChart(HandListBox);
+}
+
+//-------------------очистка всего на вкладке ручного режима-----------------
+void __fastcall TForm1::HandClearButtonClick(TObject *Sender)
+{
+	HandChart->Series[0]->Clear();
+	HandChart->Series[1]->Clear();
+	HandListBox->Clear();
+	YesButton->Enabled=0;
+	NoButton->Enabled=0;
+	HandFNameButton->Enabled=1;
+	HandSpectraButton->Enabled=0;
+}
+
+//-----------------подготовка к чтению в автоматическом режиме---------------
+void __fastcall TForm1::AutoFNameButtonClick(TObject *Sender)
+{
+
+	if ( AutoTextFileDialog->Execute() )
+	//диалог сработал
+	{
+		AutoFNameButton->Enabled=0;
+		fName=UnicodeToString(AutoTextFileDialog->FileName);
+		GetFBaseName();
+		FNameLabel->Caption=fBaseName.c_str();
+		s= "Range of file numbers: "+IntToString(fNumMin)+"..."+IntToString(fNumMax)+"\n"
+				+"Click 'START' to continue calculation";
+		AutoLabel->Caption=s.c_str();
+        StartButton->Enabled=1;
+	}
+	else //диалог не сработал
+	{
+		ShowMessage("File is not selected");
+		FNameLabel->Caption="The file is not selected";
+	}
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TForm1::StartButtonClick(TObject *Sender)
+{
+	fileCount=fNumMin;
+	while (fileCount<fNumMax)
+	{
+			CounterToFnum(fileCount);
+			AutoReadFile();
+			if (SpectrP->Check(deltaA12,
+				deltaA23,
+				deltaI12,
+				deltaI23,
+				deltaV,
+				deltaV_AB,
+				deltaQ_AB))
+			{
+					SpectrP->calcSpectr();//расчёт величин, вывод на экран
+					s=SpectrP->getStr();
+					AutoListBox->Items->Add(s.c_str());
+			}
+			fileCount++;
+	}
+
 }
 //---------------------------------------------------------------------------
 

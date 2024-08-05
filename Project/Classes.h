@@ -41,6 +41,11 @@ class SpectrPoint
 	double Min[2];
 	double TMin[2];
 
+	double I, A;//Текущие значения интеграа и амплитуды
+	double Integral[3];//три самых больших интеграла над базовой линией
+	double Amp[3];//три самых больших интеграла над базовой линией
+	double BASE; //базовый уровень
+
 	int ch;
 
   public:
@@ -48,11 +53,20 @@ class SpectrPoint
 	~SpectrPoint ();
 	void to_zero(); //экстремумы в ноль
 
+	void zeroBase(); //базу ы ноль
+	void extrAandI(DataPoint);//установка амплитуды и интегралов
+	void setBase( DataPoint , int ); //установка базовой линии
+
+	bool Check(double,double,double,double,double,double,double);
+	//проверка отклонений
+
 	void setQ(double* )	; // установка значений
 	void setV(double* )	;
 
 	void  getQ(double*); // получение значений
 	void getV(double*);
+
+	void extrBase( DataPoint);//формирование базовой линии
 	void extrSpectr( DataPoint);//сравниваем, ищем экстремумы
 	void calcSpectr(); // расчет скоростей и ампитуд
 
