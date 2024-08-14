@@ -24,9 +24,19 @@ std::string DoubleToString(double a)
 
 double DeltaCalc(double A, double B)
 {
-	double d=(A+B)/(double)2;
-	d=(A-d)/d;
-    return (fabs(d));
+	if (A==B)
+	{
+		return 0;
+	}
+	else
+	{
+		if (A>B)
+		{
+			return ((A-B)/(B+0.000001));
+		}
+		else
+		{return ((B-A)/(A+0.000001));}
+	}
 }
 //---------------------------------------------------------------------------
 			   //точка данных - время + значения напряжения на каналах
@@ -177,23 +187,52 @@ double DeltaCalc(double A, double B)
 	void SpectrPoint::extrAandI( DataPoint Point)
 	{
 		double* P=new double[ch];
-		int count =0;
 		if (I*(P[1]-BASE)<0) //если знак сменился
 		{
-			count =0;
-			while(count<3)
+			if((Integral[0])<(fabs(I)))
 			{
-				if((Integral[count])<(fabs(I))){Integral[count]=fabs(I);}
-				if(Amp[count]<fabs(A)){Amp[count]=fabs(A);}
-				count++;
+				Integral[2]=Integral[1];
+				Integral[1]=Integral[0];
+				Integral[0]=fabs(I);
+			}
+			else
+			{
+				if((Integral[1])<(fabs(I)))
+				{
+					Integral[2]=Integral[1];
+					Integral[1]=fabs(I);
+				}
+				else
+				{
+					if((Integral[2])<(fabs(I))){Integral[2]=fabs(I);}
+				}
+			}
+
+			if((Amp[0])<(fabs(A)))
+			{
+				Amp[2]=Amp[1];
+				Amp[1]=Amp[0];
+				Amp[0]=fabs(A);
+			}
+			else
+			{
+				if((Amp[1])<(fabs(A)))
+				{
+					Amp[2]=Amp[1];
+					Amp[1]=fabs(A);
+				}
+				else
+				{
+					if((Amp[2])<(fabs(A))){Amp[2]=fabs(A);}
+				}
 			}
 			I=P[1]-BASE;
-			A=P[1]-BASE;
+			A=fabs(P[1]-BASE);
 		}
 		else
 		{
-			I=I+P[1];
-			if (fabs(P[1])>fabs(A)) {A=fabs(P[1]);}
+			I=I+P[1]-BASE;
+			if (fabs(P[1]-BASE)>A) {A=fabs(P[1]-BASE);}
         }
 		delete[] P;
 	}
@@ -205,30 +244,33 @@ double DeltaCalc(double A, double B)
 				double I23,
 				double dS,
 				double dS_AB,
-				double dQ)
+				double dQ,
+				double COEF1,
+				double COEF2,
+				double VperVcomm)
 	{
 		bool a=1;
 		bool b;
 		if (ch==3)
 		{
-			b=DeltaCalc(V[0]+V[1], 2*V[2])<dS;
-			a=a||b;
+			b=DeltaCalc((V[0]+V[1])*VperVcomm, 2*V[2])<dS;
+			a=a&b;
 			b=DeltaCalc(V[0], V[1])<dS_AB;
-			a=a||b;
-			b=DeltaCalc(Q[0], Q[1])<dQ;
-			a=a||b;
+			a=a&b;
+			b=DeltaCalc(Q[0]*COEF1, Q[1]*COEF2)<dQ;
+			a=a&b;
 			return a;
 		}
 		else
 		{
 			b=DeltaCalc(Amp[0], Amp[1])<A12;
-			a=a||b;
+			a=a&b;
 			b=DeltaCalc(Amp[1], Amp[3])>A23;
-			a=a||b;
+			a=a&b;
 			b=DeltaCalc(Integral[0], Integral[1])<I12;
-			a=a||b;
+			a=a&b;
 			b=DeltaCalc(Integral[1], Integral[3])>I23;
-			a=a||b;
+			a=a&b;
 			return a;
         }
     }

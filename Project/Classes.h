@@ -43,7 +43,10 @@ class SpectrPoint
 
 	double I, A;//Текущие значения интеграа и амплитуды
 	double Integral[3];//три самых больших интеграла над базовой линией
-	double Amp[3];//три самых больших интеграла над базовой линией
+	double Amp[3];//три самых больших амплитуды над базовой линией
+	int signI[3];//соответсвующие знаки
+	int signA[3];
+
 	double BASE; //базовый уровень
 
 	int ch;
@@ -57,7 +60,7 @@ class SpectrPoint
 	void extrAandI(DataPoint);//установка амплитуды и интегралов
 	void setBase( DataPoint , int ); //установка базовой линии
 
-	bool Check(double,double,double,double,double,double,double);
+	bool Check(double,double,double,double,double,double,double,double,double,double);
 	//проверка отклонений
 
 	void setQ(double* )	; // установка значений

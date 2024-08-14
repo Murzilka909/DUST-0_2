@@ -126,6 +126,10 @@ __published:	// IDE-managed Components
 	TEdit *DeltaA23Edit;
 	TLabel *AutoLabel;
 	TButton *StartButton;
+	TLabel *AutoResLabel;
+	TStaticText *StaticText34;
+	TEdit *CoefEdit;
+	TStaticText *StaticText35;
 	void __fastcall Exit_ButtonClick(TObject *Sender);
 	void __fastcall HandFNameButtonClick(TObject *Sender);
 	void __fastcall YesButtonClick(TObject *Sender);
@@ -135,6 +139,8 @@ __published:	// IDE-managed Components
 	void __fastcall HandClearButtonClick(TObject *Sender);
 	void __fastcall AutoFNameButtonClick(TObject *Sender);
 	void __fastcall StartButtonClick(TObject *Sender);
+	void __fastcall AutoSpectraButtonClick(TObject *Sender);
+	void __fastcall AutoClearButtonClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TForm1(TComponent* Owner);

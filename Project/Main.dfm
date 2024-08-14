@@ -44,6 +44,13 @@ object Form1: TForm1
           Height = 19
           Caption = 'AutoLabel'
         end
+        object AutoResLabel: TLabel
+          Left = 583
+          Top = 200
+          Width = 64
+          Height = 19
+          Caption = 'AutoLabel'
+        end
         object AutoListBox: TListBox
           Left = 8
           Top = 20
@@ -62,6 +69,7 @@ object Form1: TForm1
           Caption = 'Get spectra'
           Enabled = False
           TabOrder = 1
+          OnClick = AutoSpectraButtonClick
         end
         object AutoFNameButton: TButton
           Left = 583
@@ -78,8 +86,8 @@ object Form1: TForm1
           Width = 506
           Height = 51
           Caption = 'Clear all'
-          Enabled = False
           TabOrder = 3
+          OnClick = AutoClearButtonClick
         end
         object StartButton: TButton
           Left = 583
@@ -745,7 +753,7 @@ object Form1: TForm1
               Width = 50
               Height = 27
               TabOrder = 5
-              Text = '0.2'
+              Text = '0.4'
             end
             object DeltaI23Edit: TEdit
               Left = 163
@@ -761,7 +769,7 @@ object Form1: TForm1
               Width = 50
               Height = 27
               TabOrder = 7
-              Text = '0.2'
+              Text = '0.4'
             end
             object StaticText26: TStaticText
               Left = 219
@@ -819,6 +827,30 @@ object Form1: TForm1
               TabOrder = 14
               Text = '0.8'
             end
+            object StaticText34: TStaticText
+              Left = 288
+              Top = 196
+              Width = 38
+              Height = 23
+              Caption = 'Coef.'
+              TabOrder = 15
+            end
+            object CoefEdit: TEdit
+              Left = 332
+              Top = 191
+              Width = 50
+              Height = 27
+              TabOrder = 16
+              Text = '1.35'
+            end
+            object StaticText35: TStaticText
+              Left = 388
+              Top = 194
+              Width = 8
+              Height = 23
+              Caption = ';'
+              TabOrder = 17
+            end
           end
           object StaticText16: TStaticText
             Left = 16
@@ -850,7 +882,7 @@ object Form1: TForm1
             Width = 50
             Height = 27
             TabOrder = 5
-            Text = '10'
+            Text = '100'
           end
           object FBaseCheckBox: TCheckBox
             Left = 176

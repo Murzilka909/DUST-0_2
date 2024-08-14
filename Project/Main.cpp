@@ -38,6 +38,8 @@ double limV;//предел напряжения
 double gainA; //усиление по каналам
 double gainB;
 
+double SinglePerDoubleC; //коэффициент для домножения в случае одного канала
+
 double stepDistrV;//области суммирования при построении спектров
 double stepDistrQ;
 
@@ -121,6 +123,7 @@ int NumFromEdit (TEdit* EDIT, int MIN, int MAX)
 		return NULL;
 	}
 }
+
 //---------------------дробное число из Editа---------------------------
 double PhDoubleFromEdit (TEdit* EDIT,   double MAX)
 {
@@ -140,6 +143,7 @@ double PhDoubleFromEdit (TEdit* EDIT,   double MAX)
 		return NULL;
 	}
 }
+
 //--------------------имя и путь к файлу по счётчику--------------------------
 void CounterToFnum (int n)
 {
@@ -375,6 +379,8 @@ void AutoReadFile()
 				SpectrP-> extrAandI(*DataP);//получение контр. параметров
 				m++;
 			}
+			SpectrP[0].calcSpectr();
+
 			fclose (file_Data);
 		}
 		else    //файл не открылся
@@ -387,10 +393,17 @@ void AutoReadFile()
 //----------------------построение спектров----------------------------------
 void GetSpectrChart(TListBox* LIST)
 {
-	i=0;
-    s = "V, m/s;";
-    Form1->SpeedListBox->Clear();
-    Form1->SpeedListBox->Items->Add(s.c_str());
+
+	s = "V, m/s;";
+	Form1->SpeedListBox->Clear();
+	Form1->SpeedListBox->Items->Add(s.c_str());
+	s = "Q, C*10^(-13);";
+	Form1->ChargeListBox->Clear();
+	Form1->ChargeListBox->Items->Add(s.c_str());
+
+	Form1->SpeedChart->Series[0]->Clear();
+	Form1->ChargeChart->Series[0]->Clear();
+
     double DAT[3];
 	int P_NUM = LIST->Count;//сколько всего строк записано
 	double* DATA_V=new double[P_NUM];
@@ -401,10 +414,16 @@ void GetSpectrChart(TListBox* LIST)
 		SpectrP->setStr(UnicodeToString(LIST->Items->operator [](i)));
 		SpectrP->getV(DAT);
 		DATA_V[i]=DAT[colNum-1];
+		if(colNum==2){DATA_V[i]=DATA_V[i]*SinglePerDoubleC;}
 
 		SpectrP->getQ(DAT);
 		if (colNum==3){DATA_Q[i]=(gainA*DAT[0]+gainB*DAT[1])/2;}
         else{DATA_Q[i]=gainA*DAT[0];}
+
+		s=DoubleToString(DATA_V[i]);
+		Form1->SpeedListBox->Items->Add(s.c_str());
+		s=DoubleToString(DATA_Q[i]);
+		Form1->ChargeListBox->Items->Add(s.c_str());
 
         i++;
 	}
@@ -427,7 +446,7 @@ void GetSpectrChart(TListBox* LIST)
 	Form1->ChargeChart->Series[0]->AddXY(0,0);
 	while (i<P_NUM)
 	{
-		if ((DATA_V[i]<j*stepDistrV)&(DATA_V[i]>(j-1)*stepDistrV))//если в интервале
+		if ((DATA_V[i]<=j*stepDistrV)&(DATA_V[i]>(j-1)*stepDistrV))//если в интервале
 		{
 			NUM_V++; //плюс 1 к высоте столбца
 		}
@@ -443,7 +462,7 @@ void GetSpectrChart(TListBox* LIST)
 			}
 			NUM_V=1;
 		}
-		if ((DATA_Q[i]<k*stepDistrQ)&(DATA_Q[i]>(k-1)*stepDistrQ))//если в интервале
+		if ((DATA_Q[i]<=k*stepDistrQ)&(DATA_Q[i]>(k-1)*stepDistrQ))//если в интервале
 		{
 			NUM_Q++; //плюс 1 к высоте столбца
 		}
@@ -484,11 +503,11 @@ __fastcall TForm1::TForm1(TComponent* Owner)
 	Form1->SpeedChart->BottomAxis->Maximum = PhDoubleFromEdit(MaxSpeedEdit,0);
 	Form1->ChargeChart->BottomAxis->Maximum = PhDoubleFromEdit(MaxChargeEdit,0);
 
-
+	SinglePerDoubleC=PhDoubleFromEdit(CoefEdit,0);
 
 	deltaV=PhDoubleFromEdit(DeltaSpeedCommEdit,1);
 	deltaV_AB=PhDoubleFromEdit(DeltaSpeedABEdit,1);
-	deltaQ_AB=PhDoubleFromEdit(DeltaChargeABEdit,1);
+	deltaQ_AB=PhDoubleFromEdit(DeltaChargeABEdit,5);
 
 	deltaI12=PhDoubleFromEdit(DeltaI12Edit,1);
 	deltaI23=PhDoubleFromEdit(DeltaI23Edit,1);
@@ -584,11 +603,11 @@ void __fastcall TForm1::SetValButtonClick(TObject *Sender)
 	Form1->SpeedChart->BottomAxis->Maximum = PhDoubleFromEdit(MaxSpeedEdit,0);
 	Form1->ChargeChart->BottomAxis->Maximum = PhDoubleFromEdit(MaxChargeEdit,0);
 
-
+	SinglePerDoubleC=PhDoubleFromEdit(CoefEdit,0);
 
 	deltaV=PhDoubleFromEdit(DeltaSpeedCommEdit,1);
 	deltaV_AB=PhDoubleFromEdit(DeltaSpeedABEdit,1);
-	deltaQ_AB=PhDoubleFromEdit(DeltaChargeABEdit,1);
+	deltaQ_AB=PhDoubleFromEdit(DeltaChargeABEdit,5);
 
 	deltaI12=PhDoubleFromEdit(DeltaI12Edit,1);
 	deltaI23=PhDoubleFromEdit(DeltaI23Edit,1);
@@ -603,7 +622,7 @@ void __fastcall TForm1::SetValButtonClick(TObject *Sender)
 //------------------построение спектров по данным ручного режима-------------
 void __fastcall TForm1::HandSpectraButtonClick(TObject *Sender)
 {
-    GetSpectrChart(HandListBox);
+	GetSpectrChart(HandListBox);
 }
 
 //-------------------очистка всего на вкладке ручного режима-----------------
@@ -640,12 +659,35 @@ void __fastcall TForm1::AutoFNameButtonClick(TObject *Sender)
 		FNameLabel->Caption="The file is not selected";
 	}
 }
-//---------------------------------------------------------------------------
 
+//-----------------последовательно считывание файлов в авт режиме------------
 void __fastcall TForm1::StartButtonClick(TObject *Sender)
 {
+	int fileCountP=0;
+
 	fileCount=fNumMin;
-	while (fileCount<fNumMax)
+	if (FBaseCheckBox->Checked==1)
+	{
+		fName=fBaseName+".txt";
+		AutoReadFile();
+		if (SpectrP->Check(deltaA12,
+				deltaA23,
+				deltaI12,
+				deltaI23,
+				deltaV,
+				deltaV_AB,
+				deltaQ_AB,
+				gainA,
+				gainB,
+				SinglePerDoubleC))
+		{
+			SpectrP->calcSpectr();//расчёт величин, вывод на экран
+			s=SpectrP->getStr();
+			AutoListBox->Items->Add(s.c_str());
+			fileCountP++;
+		}
+	}
+	while (fileCount<=fNumMax)
 	{
 			CounterToFnum(fileCount);
 			AutoReadFile();
@@ -655,15 +697,43 @@ void __fastcall TForm1::StartButtonClick(TObject *Sender)
 				deltaI23,
 				deltaV,
 				deltaV_AB,
-				deltaQ_AB))
+				deltaQ_AB,
+				gainA,
+				gainB,
+				SinglePerDoubleC))
 			{
 					SpectrP->calcSpectr();//расчёт величин, вывод на экран
 					s=SpectrP->getStr();
 					AutoListBox->Items->Add(s.c_str());
+					fileCountP++;
 			}
 			fileCount++;
 	}
 
+	AutoResLabel->Caption="";
+	s= "The study is based on a "+IntToString(colNum)+"-column methodology; ";
+	AutoResLabel->Caption=s.c_str();
+	s= "\n" + IntToString(fileCountP) + " files out of "+ IntToString(fNumMax-fNumMin+1) + " are taken into account in the spectrum.";
+	AutoResLabel->Caption=AutoResLabel->Caption+s.c_str();
+
+	AutoSpectraButton->Enabled=1;
+	AutoClearButton->Enabled=1;
+
+}
+
+//-----------------построение спектров по данным авто режима-----------------
+void __fastcall TForm1::AutoSpectraButtonClick(TObject *Sender)
+{
+		GetSpectrChart(AutoListBox);
+}
+
+//-----------------очистка всего во вкладке авт режима-----------------------
+void __fastcall TForm1::AutoClearButtonClick(TObject *Sender)
+{
+	AutoListBox->Clear();
+	AutoFNameButton->Enabled=1;
+	StartButton->Enabled=0;
+	AutoSpectraButton->Enabled=0;
 }
 //---------------------------------------------------------------------------
 
